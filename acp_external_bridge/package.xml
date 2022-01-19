@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>sev_acp_external_bridge</name>
+  <version>7.0.1</version>
+  <description>Message forwarding and translation between sev_acp over UDP and ros, with reduced dependencies and configuration.</description>
+  <maintainer email="developer@sevensense.ch">Sevensense developers</maintainer>
+  <license>closed</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <buildtool_depend>catkin_simple</buildtool_depend>
+  <depend>cuckoo_time_translator</depend>
+  <depend>geometry_msgs</depend>
+  <depend>state_machine_msgs</depend>
+  <depend>atlas_msgs</depend>
+  <depend>minkindr_conversions</depend>
+  <depend>sev_acp_ros_conversions</depend>
+  <build_depend>roscpp</build_depend>
+  <build_depend>sevencpp_build</build_depend>
+  <depend>sev_acp_udp</depend>
+
+</package>

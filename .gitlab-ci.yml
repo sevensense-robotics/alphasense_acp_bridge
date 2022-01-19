@@ -1,0 +1,8 @@
+---
+include:
+  - project: sevensense/general/7s_ci_templates
+    ref: v2
+    file: /default.yaml
+
+variables:
+  CREATE_DEBIAN_PACKAGES: "true"
