@@ -27,10 +27,12 @@ deb [arch=amd64 signed-by=/usr/share/keyrings/deb-7sr-ch-keyring.gpg] https://de
 Generally the package and its dependencies can be installed with on ROS-noetic
 
 ```sh
+sudo apt update
 sudo apt install ros-noetic-sev-acp-external-bridge
 ```
 or on ROS-melodic
 ```sh
+sudo apt update
 sudo apt install ros-melodic-sev-acp-external-bridge
 ```
 
