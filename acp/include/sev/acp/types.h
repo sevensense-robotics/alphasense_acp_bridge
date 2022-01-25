@@ -8,9 +8,10 @@
 #include <cstdint>
 #include <utility>
 
-#include "sev/acp/serialization.h"
+#include "./serialization_base.h"
 
-namespace sev::acp {
+namespace sev {
+namespace acp {
 
 using flag_t = uint8_t;
 
@@ -98,11 +99,13 @@ struct __attribute__((__packed__)) Notifications
 };
 // Ensure the empty base class doesn't add size.
 static_assert(
-    sizeof(Notifications) == 5 * sizeof(int32_t) + sizeof(MessageHeader));
+    sizeof(Notifications) == 5 * sizeof(int32_t) + sizeof(MessageHeader),
+    "Crosscheck in message size computation failed.");
 // Ensure there are no padding bits at the end of the MessageHeader.
 static_assert(
     sizeof(Notifications) ==
-    5 * sizeof(int32_t) + sizeof(int64_t) + sizeof(uint32_t));
+        5 * sizeof(int32_t) + sizeof(int64_t) + sizeof(uint32_t),
+    "Crosscheck in message size computation failed.");
 
 struct __attribute__((__packed__)) WheelOdometryIntegrated
     : public AbstractBase<
@@ -171,6 +174,7 @@ static_assert(
     message_size<WheelOdometryInt>() == 40,
     "WheelOdometryInt size unexpected.");
 
-}  // namespace sev::acp
+}  // namespace acp
+}  // namespace sev
 
 #endif  // SEV_ACP_TYPES_H_
