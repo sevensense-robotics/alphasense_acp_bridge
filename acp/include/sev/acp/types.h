@@ -2,13 +2,12 @@
 #define SEV_ACP_TYPES_H_
 
 #include <algorithm>
-#include <array>
 #include <cmath>
 #include <cstddef>
-#include <cstdint>
+// #include <cstdint>  // TODO(pseyfert): review necessity here.
 #include <utility>
 
-#include "./serialization_base.h"
+// #include "./serialization_base.h"
 
 namespace sev {
 namespace acp {
@@ -38,28 +37,6 @@ template <typename DERIVED, MessageType MESSAGE_TYPE>
 struct __attribute__((__packed__)) AbstractBase {
   constexpr static MessageType message_type() {
     return MESSAGE_TYPE;
-  }
-  template <std::size_t SIZE>
-  int write(std::array<char, SIZE>& dest) const {
-    return write(reinterpret_cast<unsigned char*>(dest.data()), SIZE);
-  }
-  template <std::size_t SIZE>
-  int write(std::array<unsigned char, SIZE>& dest) const {
-    return write(dest.data(), SIZE);
-  }
-  int write(
-      unsigned char* dest,
-      std::size_t max_buffer = message_size<DERIVED>()) const {
-    return write_fun<DERIVED>(
-        static_cast<DERIVED const*>(this), dest, max_buffer);
-  }
-  template <typename CALLABLE>
-  int write_callable(CALLABLE&& callable) const {
-    return write_lambda<DERIVED, CALLABLE>(
-        static_cast<DERIVED const*>(this), std::forward<CALLABLE>(callable));
-  }
-  int read(unsigned char const* src, std::size_t size) {
-    return read_fun<DERIVED>(static_cast<DERIVED*>(this), src, size);
   }
   friend bool operator==(const DERIVED& lhs, const DERIVED& rhs) {
     auto lhs_begin = reinterpret_cast<const char*>(&lhs);

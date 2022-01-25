@@ -2,7 +2,7 @@
 #define SEV_ACP_SERIALIZATION_BASE_H_
 
 #include <cstddef>
-#include <cstdint>  // TODO(pseyfert): review necessity here.
+// #include <cstdint>  // TODO(pseyfert): review necessity here.
 #include <cstring>
 #include <map>
 #include <stdexcept>
@@ -153,6 +153,8 @@ int write_lambda(const T* obj, Callable&& c) {
   return written;
 }
 
+// TODO(pseyfert): Re-add write to std::array as free standing function as
+// overload, such that caller don't need to use .data() + .size().
 template <
     typename T,
     typename = typename std::enable_if<serializable_trait<T>::value>::type>
