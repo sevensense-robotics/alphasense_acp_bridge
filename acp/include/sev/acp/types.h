@@ -108,7 +108,7 @@ struct __attribute__((__packed__)) WheelOdometryIntegrated
     : public AbstractBase<
           WheelOdometryIntegrated, acp::MessageType::kWheelOdometryIntegrated> {
   MessageHeader header;
-  double twist[6];  // x,y,z, Y,P, R,
+  double twist[6];  // x,y,z, R,P,Y
 };
 
 struct __attribute__((__packed__)) WheelOdometryPose
@@ -164,7 +164,7 @@ struct __attribute__((__packed__)) WheelOdometryInt
     : public AbstractBase<
           WheelOdometryInt, acp::MessageType::kWheelOdometryInt> {
   MessageHeader header;
-  int32_t twist[6];  // x,y,z, Y,P,R
+  int32_t twist[6];  // x,y,z, R,P,Y
 };
 
 static_assert(
