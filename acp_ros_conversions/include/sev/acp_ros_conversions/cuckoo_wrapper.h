@@ -57,7 +57,9 @@ class TimeTranslator {
     const std::scoped_lock<std::mutex> translator_lock(translator_mutex_);
     const auto last_timestamp_typed_it = [&]() {
       auto tmp = last_timestamp_per_type_.begin();
-      std::advance(tmp, static_cast<std::size_t>(AcpType::message_type()));
+      std::advance(
+          tmp,
+          static_cast<std::size_t>(MessageTypeIdLookup<AcpType>::message_type));
       return tmp;
     }();
     last_timestamp_ = std::max(last_timestamp_, message_times.transmitted);
@@ -69,7 +71,9 @@ class TimeTranslator {
       const MessageTimes message_times) {
     const auto last_timestamp_typed_it = [&]() {
       auto tmp = last_timestamp_per_type_.begin();
-      std::advance(tmp, static_cast<std::size_t>(AcpType::message_type()));
+      std::advance(
+          tmp,
+          static_cast<std::size_t>(MessageTypeIdLookup<AcpType>::message_type));
       return tmp;
     }();
     const std::scoped_lock<std::mutex> translator_lock(translator_mutex_);
@@ -87,7 +91,8 @@ class TimeTranslator {
     } else {
       if (message_times.transmitted <= *last_timestamp_typed_it) {
         std::cout << "WARNING: Receiving a new message of type "
-                  << sev::acp::message_type_lookup(AcpType::message_type())
+                  << sev::acp::message_type_name_lookup(
+                         MessageTypeIdLookup<AcpType>::message_type)
                   << " but its timestamp is not newer "
                      "than a previous message of the same "
                      "type. Dropping message.";

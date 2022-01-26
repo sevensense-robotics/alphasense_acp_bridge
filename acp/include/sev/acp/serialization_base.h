@@ -2,14 +2,15 @@
 #define SEV_ACP_SERIALIZATION_BASE_H_
 
 #include <cstddef>
-// #include <cstdint>  // TODO(pseyfert): review necessity here.
 #include <cstring>
 #include <map>
 #include <stdexcept>
 #include <string>
+#include "types.h"
 
 namespace sev {
 namespace acp {
+
 enum class MessageType : int32_t {
   kPose = 0,
   kOperationState = 1,
@@ -26,7 +27,16 @@ enum class MessageType : int32_t {
   // kUninitialized = 99
 };
 
-inline const std::string& message_type_lookup(acp::MessageType mt) {
+template <typename T>
+constexpr std::size_t message_size() {
+  return sizeof(MessageType) + sizeof(T);
+}
+
+static_assert(
+    message_size<WheelOdometryInt>() == 40,
+    "WheelOdometryInt size unexpected.");
+
+inline const std::string& message_type_name_lookup(acp::MessageType mt) {
   static const std::map<MessageType, std::string> message_type_lookup{
       {MessageType::kPose, "Pose"},
       {MessageType::kOperationState, "OperationState"},
@@ -46,21 +56,53 @@ inline const std::string& message_type_lookup(acp::MessageType mt) {
   }
 }
 
-struct __attribute__((__packed__)) MessageHeader {
-  uint32_t seq;       // over all messages sent ?!
-  int64_t timestamp;  // epoch nanoseconds
-  int read(unsigned char const* src) {
-    const auto retval = sizeof(decltype(*this));
-    std::memcpy(reinterpret_cast<char*>(this), src, retval);
-    return retval;
-  }
-  friend bool operator==(const MessageHeader& lhs, const MessageHeader& rhs) {
-    return lhs.seq == rhs.seq && lhs.timestamp == rhs.timestamp;
-  }
-  friend bool operator!=(const MessageHeader& lhs, const MessageHeader& rhs) {
-    return !(lhs == rhs);
-  }
+template <typename T>
+struct MessageTypeIdLookup;
+
+template <>
+struct MessageTypeIdLookup<Pose> {
+  constexpr static MessageType message_type = MessageType::kPose;
 };
+template <>
+struct MessageTypeIdLookup<OperationState> {
+  constexpr static MessageType message_type = MessageType::kOperationState;
+};
+template <>
+struct MessageTypeIdLookup<Notifications> {
+  constexpr static MessageType message_type = MessageType::kNotification;
+};
+template <>
+struct MessageTypeIdLookup<WheelOdometryIntegrated> {
+  constexpr static MessageType message_type =
+      MessageType::kWheelOdometryIntegrated;
+};
+template <>
+struct MessageTypeIdLookup<WheelOdometryPose> {
+  constexpr static MessageType message_type = MessageType::kWheelOdometryPose;
+};
+template <>
+struct MessageTypeIdLookup<WheelOdometryWheelTicks> {
+  constexpr static MessageType message_type =
+      MessageType::kWheelOdometryWheelTicks;
+};
+template <>
+struct MessageTypeIdLookup<WheelOdometryWheelVel> {
+  constexpr static MessageType message_type =
+      MessageType::kWheelOdometryWheelVel;
+};
+template <>
+struct MessageTypeIdLookup<PoseInt> {
+  constexpr static MessageType message_type = MessageType::kPoseInt;
+};
+template <>
+struct MessageTypeIdLookup<PoseFloat> {
+  constexpr static MessageType message_type = MessageType::kPoseFloat;
+};
+template <>
+struct MessageTypeIdLookup<WheelOdometryInt> {
+  constexpr static MessageType message_type = MessageType::kWheelOdometryInt;
+};
+
 template <typename T>
 struct serializable_trait {
   constexpr static bool value = false;
@@ -116,12 +158,6 @@ struct serializable_trait<struct WheelOdometryInt> {
 };
 
 template <
-    typename T,
-    typename = typename std::enable_if<serializable_trait<T>::value>::type>
-constexpr std::size_t message_size() {
-  return sizeof(MessageType) + sizeof(T);
-}
-template <
     typename T, typename Callable,
     typename = typename std::enable_if<
         serializable_trait<typename std::decay<T>::type>::value>::type
@@ -133,7 +169,7 @@ template <
     >
 int write_lambda(const T* obj, Callable&& c) {
   std::size_t written = 0;
-  MessageType t = T::message_type();
+  MessageType t = MessageTypeIdLookup<T>::message_type;
   while (written < sizeof(MessageType)) {
     written +=
         c(reinterpret_cast<const char*>(&t) + written, sizeof(MessageType));
@@ -194,7 +230,7 @@ int read_lambda(T* dest, Callable&& c) {
     read += c(
         reinterpret_cast<char*>(&read_type) + read, sizeof(MessageType) - read);
   }
-  if (read_type != T::message_type()) {
+  if (read_type != MessageTypeIdLookup<T>::message_type) {
     throw std::runtime_error(
         "Message contains a different type than the one that's being "
         "deserialized to.");

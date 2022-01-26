@@ -11,13 +11,9 @@
 #include <type_traits>
 #include <variant>
 
-#include "./serialization_base.h"
+#include "serialization_base.h"
 
 namespace sev::acp {
-// template <typename... U>
-// struct serializable_trait {
-//   constexpr static bool value = std::conjunction_v<serializable_trait<U>...>;
-// };
 template <typename... T>
 constexpr bool serializable_v = (serializable_trait<T>::value && ...);
 
@@ -26,7 +22,7 @@ template <typename DesiredType, typename... AllTypes>
 bool read_one_type(
     MessageType read_type, const unsigned char* data, std::size_t size,
     std::variant<AllTypes...>* target) {
-  if (read_type != DesiredType::message_type()) {
+  if (read_type != MessageTypeIdLookup<DesiredType>::message_type) {
     return false;
   }
   if (size < message_size<DesiredType>()) {
@@ -51,8 +47,11 @@ constexpr bool validate_message_types_distinctive() {
 }
 template <typename T1, typename T2, typename... Ts>
 constexpr bool validate_message_types_distinctive() {
-  return (T1::message_type() != T2::message_type()) &&
-         ((T1::message_type() != Ts::message_type()) && ...) &&
+  return (MessageTypeIdLookup<T1>::message_type !=
+          MessageTypeIdLookup<T2>::message_type) &&
+         ((MessageTypeIdLookup<T1>::message_type !=
+           MessageTypeIdLookup<Ts>::message_type) &&
+          ...) &&
          validate_message_types_distinctive<T2, Ts...>();
 }
 }  // namespace detail
@@ -86,7 +85,8 @@ std::variant<T...> read_variant(const unsigned char* src, std::size_t size) {
   if (std::holds_alternative<acp::MessageType>(deser)) {
     auto message_type = std::get<acp::MessageType>(deser);
     auto what = std::string("Encountered a message of type ") +
-                message_type_lookup(message_type) + ", which is not expected.";
+                message_type_name_lookup(message_type) +
+                ", which is not expected.";
     throw std::runtime_error(what);
   }
   // This is casting variant<ruled_out, T...> -> variant<T...>.
@@ -102,6 +102,18 @@ std::variant<T...> read_variant(const unsigned char* src, std::size_t size) {
       },
       deser);
 }
+
+// Asserts from types.h.
+
+// Ensure the empty base class doesn't add size.
+static_assert(
+    sizeof(Notifications) == 5 * sizeof(int32_t) + sizeof(MessageHeader),
+    "Crosscheck in message size computation failed.");
+// Ensure there are no padding bits at the end of the MessageHeader.
+static_assert(
+    sizeof(Notifications) ==
+        5 * sizeof(int32_t) + sizeof(int64_t) + sizeof(uint32_t),
+    "Crosscheck in message size computation failed.");
 
 }  // namespace sev::acp
 
