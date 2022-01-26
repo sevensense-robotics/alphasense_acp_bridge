@@ -73,7 +73,9 @@ struct UdpSender {
   void send_message(Message&& m) const {
     constexpr int message_size = acp::message_size<std::decay_t<Message>>();
     std::array<unsigned char, message_size> a;
-    write_fun<typename std::decay<Message>::type>(static_cast<typename std::decay<Message>::type const*>(&m), a.data(), a.size());
+    write_fun<typename std::decay<Message>::type>(
+        static_cast<typename std::decay<Message>::type const*>(&m), a.data(),
+        a.size());
     // m.write(static_cast<unsigned char*>(a.data()));
 
     auto sent_bytes = send_buffer(a);

@@ -6,7 +6,7 @@
 #include <map>
 #include <stdexcept>
 #include <string>
-#include "types.h"
+#include "./types.h"
 
 namespace sev {
 namespace acp {
@@ -163,8 +163,8 @@ template <
         serializable_trait<typename std::decay<T>::type>::value>::type
     // ,
     // typename = typename std::enable_if_t<std::is_invocable_r<
-    //     int, #<{(|decay?|)}># std::decay_t<Callable>, #<{(|char?void?|)}>#
-    //     const T*,
+    //     int, #<{(|decay?|)}># std::decay_t<Callable>,
+    //     #<{(|char?void?|)}># const T*,
     //     #<{(|size_t?|)}># int>::value>
     >
 int write_lambda(const T* obj, Callable&& c) {
