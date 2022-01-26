@@ -13,6 +13,10 @@
 
 #include "./serialization_base.h"
 
+#if __cplusplus < 201703L
+#error "Header serialization_modern.h requires at least C++17"
+#endif
+
 namespace sev::acp {
 template <typename... T>
 constexpr bool serializable_v = (serializable_trait<T>::value && ...);

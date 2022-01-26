@@ -8,6 +8,10 @@
 #include <string>
 #include "./types.h"
 
+#if __cplusplus < 201103L
+#error "Header serialization_base.h requires at least C++11"
+#endif
+
 namespace sev {
 namespace acp {
 
