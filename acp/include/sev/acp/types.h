@@ -11,7 +11,6 @@ namespace sev {
 namespace acp {
 
 typedef uint8_t flag_t;
-// using flag_t = uint8_t;
 
 inline bool equal_or_both_nan(double lhs, double rhs) {
   return lhs == rhs || (std::isnan(lhs) && std::isnan(rhs));
