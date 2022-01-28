@@ -12,6 +12,17 @@ namespace acp {
 
 typedef uint8_t flag_t;
 
+struct __attribute__((__packed__)) MessageHeader {
+  uint32_t seq;       // over all messages sent ?!
+  int64_t timestamp;  // epoch nanoseconds
+  friend bool operator==(const MessageHeader& lhs, const MessageHeader& rhs) {
+    return lhs.seq == rhs.seq && lhs.timestamp == rhs.timestamp;
+  }
+  friend bool operator!=(const MessageHeader& lhs, const MessageHeader& rhs) {
+    return !(lhs == rhs);
+  }
+};
+
 inline bool equal_or_both_nan(double lhs, double rhs) {
   return lhs == rhs || (std::isnan(lhs) && std::isnan(rhs));
 }
@@ -31,16 +42,6 @@ struct __attribute__((__packed__)) Rot3 {
   }
 };
 
-struct __attribute__((__packed__)) MessageHeader {
-  uint32_t seq;       // over all messages sent ?!
-  int64_t timestamp;  // epoch nanoseconds
-  friend bool operator==(const MessageHeader& lhs, const MessageHeader& rhs) {
-    return lhs.seq == rhs.seq && lhs.timestamp == rhs.timestamp;
-  }
-  friend bool operator!=(const MessageHeader& lhs, const MessageHeader& rhs) {
-    return !(lhs == rhs);
-  }
-};
 
 template <typename DERIVED>
 struct __attribute__((__packed__)) AbstractBase {
