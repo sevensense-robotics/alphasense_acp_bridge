@@ -21,7 +21,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include "sev/acp/serialization.h"
+#include "sev/acp/serialization_modern.h"
 #include "sev/acp_udp/port.h"
 
 namespace sev::acp::udp {

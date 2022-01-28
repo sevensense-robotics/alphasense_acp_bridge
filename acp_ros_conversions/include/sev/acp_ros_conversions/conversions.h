@@ -12,7 +12,7 @@
 #include "state_machine_msgs/Status.h"
 #include "std_msgs/Header.h"
 
-#include "sev/acp/serialization.h"
+// #include "sev/acp/serialization.h"
 #include "sev/acp/types.h"
 
 namespace sev::acp::udp_ros_bridge {

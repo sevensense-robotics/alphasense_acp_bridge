@@ -6,7 +6,7 @@
 #include <type_traits>
 #include <variant>
 
-#include "sev/acp/serialization.h"
+#include "sev/acp/serialization_modern.h"
 #include "sev/acp/types.h"
 #include "sev/acp_udp/port.h"
 #include "sev/acp_udp/receiver.h"

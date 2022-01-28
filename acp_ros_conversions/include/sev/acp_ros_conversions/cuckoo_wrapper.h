@@ -13,7 +13,7 @@
 #include "cuckoo_time_translator/ClockParameters.h"
 #include "ros/node_handle.h"
 #include "ros/time.h"
-#include "sev/acp/serialization.h"
+#include "sev/acp/serialization_base.h"
 
 namespace sev::acp::udp_ros_bridge {
 struct MessageTimes {
