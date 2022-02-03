@@ -24,7 +24,7 @@ See the documentation of Alphansense Position supplied with the product.
 
 To install the Alphasense Communication Protocol (ACP) bridge on Ubuntu 20.04 + ROS-noetic and Ubuntu 18.04 + ROS-melodic systems with amd64 or arm64 architecture we recommend installation over APT.
 
-The APT repository details have been provided in the Alphasense Position manual that is provided with the unit.
+The APT repository details are listed in the Alphasense Position manual that is provided with the unit.
 
 ### Install the bridge
 
