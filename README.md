@@ -53,8 +53,11 @@ As of now, the following dependencies still need to be installed from the APT re
 - `atlas_msgs`
 - `minkindr_conversions`
 - `cuckoo_time_translator`
-- `minkindr_conversions`
 
+These dependencies (which have been tested for `ROS Noetic`) can be installed with the following command.
+```
+sudo apt update && sudo apt install sevencpp-build ros-<distro>-state-machine-msgs ros-<distro>-atlas-msgs ros-<distro>-minkindr-conversions ros-<distro>-cuckoo-time-translator
+```
 
 # Using the bridge
 
