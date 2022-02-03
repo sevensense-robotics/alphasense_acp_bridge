@@ -24,23 +24,7 @@ See the documentation of Alphansense Position supplied with the product.
 
 To install the Alphasense Communication Protocol (ACP) bridge on Ubuntu 20.04 + ROS-noetic and Ubuntu 18.04 + ROS-melodic systems with amd64 or arm64 architecture we recommend installation over APT.
 
-```sh
-# Install curl for the next step
-sudo apt install curl
-
-# Add the Sevensense PGP key to make this machine trust Sevensense's packages.
-curl -Ls https://deb.7sr.ch/pubkey.gpg | sudo gpg --dearmor -o /usr/share/keyrings/deb-7sr-ch-keyring.gpg
-
-# Add the Sevensense APT repository to the list of known sources.
-echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/deb-7sr-ch-keyring.gpg] https://deb.7sr.ch/alphasense $(lsb_release -cs) main" \
-          | sudo tee /etc/apt/sources.list.d/sevensense.list
-```
-
-This should result in a file `/etc/apt/sources.list.d/sevensense.list` with the following content.
-
-```
-deb [arch=amd64 signed-by=/usr/share/keyrings/deb-7sr-ch-keyring.gpg] https://devel.deb.7sr.ch/alphasense focal main
-```
+The APT repository details are listed in the Alphasense Position manual that is provided with the unit.
 
 ### Install the bridge
 
