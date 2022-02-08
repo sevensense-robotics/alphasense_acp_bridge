@@ -57,7 +57,7 @@ std::optional<ros::Publisher> instantiate_publisher(
 }
 
 template <typename RosType>
-std::optional<ros::Publisher> instantiate_pose_publisher(
+std::optional<ros::Publisher> instantiate_publisher_with_suffix(
     ros::NodeHandle* n, const std::string& prefix) {
   if (prefix.empty()) {
     return std::nullopt;
@@ -83,11 +83,10 @@ class UdpReceiverWrapper {
         operation_state_pub_{
             detail::instantiate_publisher<state_machine_msgs::State>(
                 n, config.operation_state_topic)},
-        ros_pub_{detail::instantiate_pose_publisher<geometry_msgs::PoseStamped>(
-            n, config.pose_prefix)},
-        positioning_update_pub_{
-            detail::instantiate_pose_publisher<atlas_msgs::PositioningUpdate>(
-                n, config.pose_prefix)},
+        ros_pub_{detail::instantiate_publisher_with_suffix<
+            geometry_msgs::PoseStamped>(n, config.pose_prefix)},
+        positioning_update_pub_{detail::instantiate_publisher_with_suffix<
+            atlas_msgs::PositioningUpdate>(n, config.pose_prefix)},
         receiver_{config.receive_port},
         time_translator_{n} {}
 
@@ -119,7 +118,7 @@ class UdpReceiverWrapper {
                     if constexpr (std::is_same_v<
                                       AcpType, sev::acp::Notifications>) {
                       if (notification_pub_) {
-                        this->notification_pub_->publish(
+                        notification_pub_->publish(
                             std::get<state_machine_msgs::Status>(
                                 ros_message_tuple));
                       }
@@ -127,7 +126,7 @@ class UdpReceiverWrapper {
                                              AcpType,
                                              sev::acp::OperationState>) {
                       if (operation_state_pub_) {
-                        this->operation_state_pub_->publish(
+                        operation_state_pub_->publish(
                             std::get<state_machine_msgs::State>(
                                 ros_message_tuple));
                       }
