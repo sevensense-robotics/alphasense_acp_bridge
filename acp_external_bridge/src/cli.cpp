@@ -36,10 +36,26 @@ std::optional<Config> parse_args(int ac, char** av) {  // NOLINT
     )
     (
       "pose-topic",
-      po::value<std::string>(&config.publish_topic)
+      po::value<std::string>(&config.pose_prefix)
           ->default_value("")
           ->value_name("PREFIX"),
       "ROS topic prefix on which poses will be published. "
+      "Leave empty to disable."
+    )
+    (
+      "notification-topic",
+      po::value<std::string>(&config.notification_topic)
+          ->default_value("")
+          ->value_name("PREFIX"),
+      "ROS topic on which notifications will be published. "
+      "Leave empty to disable."
+    )
+    (
+      "operation-state-topic",
+      po::value<std::string>(&config.operation_state_topic)
+          ->default_value("")
+          ->value_name("PREFIX"),
+      "ROS topic on which operation states will be published. "
       "Leave empty to disable."
     )
     (

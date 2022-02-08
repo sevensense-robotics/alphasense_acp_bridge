@@ -5,8 +5,10 @@
 
 struct Config {
   uint16_t receive_port;
-  std::string publish_topic;
+  std::string pose_prefix;
   std::string subscribe_topic;
+  std::string notification_topic;
+  std::string operation_state_topic;
   std::string ae_address;
   uint16_t ae_port;
 };

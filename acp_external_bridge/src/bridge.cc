@@ -46,46 +46,65 @@ template <typename... RosType>
 auto get_time(const std::tuple<RosType...>& ros_message) {
   return std::get<0>(ros_message).header.stamp.toNSec();
 }
+
+template <typename RosType>
+std::optional<ros::Publisher> instantiate_publisher(
+    ros::NodeHandle* n, const std::string& topic) {
+  if (topic.empty()) {
+    return std::nullopt;
+  }
+  return n->advertise<RosType>(topic, 10);
+}
+
+template <typename RosType>
+std::optional<ros::Publisher> instantiate_pose_publisher(
+    ros::NodeHandle* n, const std::string& prefix) {
+  if (prefix.empty()) {
+    return std::nullopt;
+  }
+  return n->advertise<RosType>(
+      prefix + "/" + sev::acp::udp_ros_bridge::suffix_lookup<RosType>(), 10);
+}
 }  // namespace detail
 
 class UdpReceiverWrapper {
-  ros::Publisher ros_pub_;
-  ros::Publisher positioning_update_pub_;
+  std::optional<ros::Publisher> notification_pub_;
+  std::optional<ros::Publisher> operation_state_pub_;
+  std::optional<ros::Publisher> ros_pub_;
+  std::optional<ros::Publisher> positioning_update_pub_;
 
   sev::acp::udp::UdpReceiver receiver_;
   sev::acp::udp_ros_bridge::TimeTranslator time_translator_;
 
  public:
-  UdpReceiverWrapper(
-      ros::NodeHandle* n, const std::string& topic, uint16_t receive_port)
-      : ros_pub_{n->advertise<geometry_msgs::PoseStamped>(
-            topic + "/" +
-                sev::acp::udp_ros_bridge::suffix_lookup<
-                    geometry_msgs::PoseStamped>(),
-            10)},
-        positioning_update_pub_{n->advertise<atlas_msgs::PositioningUpdate>(
-            topic + "/" +
-                sev::acp::udp_ros_bridge::suffix_lookup<
-                    atlas_msgs::PositioningUpdate>(),
-            10)},
-        receiver_{receive_port},
+  UdpReceiverWrapper(ros::NodeHandle* n, const Config& config)
+      : notification_pub_{detail::instantiate_publisher<
+            state_machine_msgs::Status>(n, config.notification_topic)},
+        operation_state_pub_{
+            detail::instantiate_publisher<state_machine_msgs::State>(
+                n, config.operation_state_topic)},
+        ros_pub_{detail::instantiate_pose_publisher<geometry_msgs::PoseStamped>(
+            n, config.pose_prefix)},
+        positioning_update_pub_{
+            detail::instantiate_pose_publisher<atlas_msgs::PositioningUpdate>(
+                n, config.pose_prefix)},
+        receiver_{config.receive_port},
         time_translator_{n} {}
 
   void spin(std::atomic_bool* keep_listening) {
     while (ros::ok()) {
       try {
-        const auto message =
-            receiver_
-                .receive_Messages<false, sev::acp::Pose, sev::acp::PoseFloat>(
-                    keep_listening);
+        const auto message = receiver_.receive_Messages<
+            false, sev::acp::Pose, sev::acp::PoseFloat,
+            sev::acp::OperationState, sev::acp::Notifications>(keep_listening);
 
         const auto received_time = ros::Time::now();
         std::visit(
             [this, received_time](auto&& acp_object) {
               using AcpType = std::decay_t<decltype(acp_object)>;
               if constexpr (!std::is_same_v<AcpType, sev::acp::MessageType>) {
-                // This condition is false when we receive an OperationStatus,
-                // Notification, or new message type.
+                // This condition is false when we receive a message type other
+                // than those in the list of .receive_Messages<false, ...>.
                 try {
                   auto ros_message_tuple = convertToRosStamped(acp_object);
                   const MessageTimes message_times{
@@ -97,27 +116,49 @@ class UdpReceiverWrapper {
                   if (republish_time) {
                     detail::update_timestamps(
                         &ros_message_tuple, *republish_time);
-                    std::apply(
-                        [&ros_pub = this->ros_pub_,
-                         &positioning_update_pub =
-                             this->positioning_update_pub_](auto... msg) {
-                          auto publish = [&ros_pub,
-                                          &positioning_update_pub](auto x) {
-                            if constexpr (std::is_same_v<
-                                              std::decay_t<decltype(x)>,
-                                              atlas_msgs::PositioningUpdate>) {
-                              positioning_update_pub.publish(x);
-                            } else if constexpr (std::is_same_v<
-                                                     std::decay_t<decltype(x)>,
-                                                     geometry_msgs::
-                                                         PoseStamped>) {
-                              ros_pub.publish(x);
-                            }
-                          };
-                          (..., publish(msg));
-                        },
-                        ros_message_tuple);
-                  }
+                    if constexpr (std::is_same_v<
+                                      AcpType, sev::acp::Notifications>) {
+                      if (notification_pub_) {
+                        this->notification_pub_->publish(
+                            std::get<state_machine_msgs::Status>(
+                                ros_message_tuple));
+                      }
+                    } else if constexpr (std::is_same_v<
+                                             AcpType,
+                                             sev::acp::OperationState>) {
+                      if (operation_state_pub_) {
+                        this->operation_state_pub_->publish(
+                            std::get<state_machine_msgs::State>(
+                                ros_message_tuple));
+                      }
+                    } else {
+                      std::apply(
+                          [&ros_pub = this->ros_pub_,
+                           &positioning_update_pub =
+                               this->positioning_update_pub_](auto... msg) {
+                            auto publish = [&ros_pub,
+                                            &positioning_update_pub](auto x) {
+                              if constexpr (std::is_same_v<
+                                                std::decay_t<decltype(x)>,
+                                                atlas_msgs::
+                                                    PositioningUpdate>) {
+                                if (positioning_update_pub) {
+                                  positioning_update_pub->publish(x);
+                                }
+                              } else if constexpr (
+                                  std::is_same_v<
+                                      std::decay_t<decltype(x)>,
+                                      geometry_msgs::PoseStamped>) {
+                                if (ros_pub) {
+                                  ros_pub->publish(x);
+                                }
+                              }
+                            };
+                            (..., publish(msg));
+                          },
+                          ros_message_tuple);
+                    }  // constexpr else
+                  }    // if republish_time
                 } catch (const ConversionError& e) {
                   std::cout
                       << "ERROR: Encountered conversion error:\n"
@@ -178,13 +219,14 @@ int main(int argc, char** argv) {
     send_thread = std::thread{[&]() { ros::spin(); }};
   }
 
-  if (!config->publish_topic.empty()) {
+  if (!config->pose_prefix.empty() || !config->notification_topic.empty() ||
+      !config->operation_state_topic.empty()) {
     // Launch receive thread.
     // We want the UdpReceiver running in a different thread than the signal
     // handler.
     std::thread receive_thread([&]() {
       sev::acp::udp_ros_bridge::UdpReceiverWrapper receiver_wrapper(
-          &n, config->publish_topic, config->receive_port);
+          &n, *config);
 
       receiver_wrapper.spin(&keep_listening);
     });
