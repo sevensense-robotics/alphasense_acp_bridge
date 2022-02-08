@@ -15,11 +15,11 @@ std::optional<Config> parse_args(int ac, char** av) {  // NOLINT
      "Show help message."
     )
     (
-      "pose-port",
+      "local-port",
       po::value<uint16_t>(&config.receive_port)
           ->default_value(sev::acp::udp::default_port)
           ->value_name("PORT"),
-      "Port on which the bridge listens for pose messages."
+      "Port on which the bridge listens (e.g. for pose messages)."
     )
     (
       "alphasense-port",
@@ -35,36 +35,39 @@ std::optional<Config> parse_args(int ac, char** av) {  // NOLINT
       "IP Address of Alphasense Embedded."
     )
     (
-      "pose-topic",
-      po::value<std::string>(&config.pose_prefix)
-          ->default_value("")
-          ->value_name("PREFIX"),
-      "ROS topic prefix on which poses will be published. "
-      "Leave empty to disable."
+      "ros-pose-topic",
+      po::value<std::string>(&config.ros_pose_topic)
+          ->default_value("/alphasense_position/T_G_O_propagated")
+          ->value_name("TOPIC"),
+      "ROS topic on which geometry_msgs poses will be published."
+    )
+    (
+      "positioning-update-topic",
+      po::value<std::string>(&config.positioning_update_topic)
+          ->default_value("/alphasense_position/T_G_O_propagated_update")
+          ->value_name("TOPIC"),
+      "ROS topic on which positioning updates will be published."
     )
     (
       "notification-topic",
       po::value<std::string>(&config.notification_topic)
-          ->default_value("")
+          ->default_value("/alphasense_position/notifications")
           ->value_name("TOPIC"),
-      "ROS topic on which notifications will be published. "
-      "Leave empty to disable."
+      "ROS topic on which notifications will be published."
     )
     (
       "operation-state-topic",
       po::value<std::string>(&config.operation_state_topic)
-          ->default_value("")
+          ->default_value("/alphasense_position/operation_state")
           ->value_name("TOPIC"),
-      "ROS topic on which operation states will be published. "
-      "Leave empty to disable."
+      "ROS topic on which operation states will be published."
     )
     (
       "odometry-topic",
       po::value<std::string>(&config.subscribe_topic)
-          ->default_value("")
+          ->default_value("/robot/velocity")
           ->value_name("TOPIC"),
       "ROS topic with odometry data, that the bridge should listen to."
-      "Leave empty to disable."
     )
     ;  // NOLINT
   // clang-format on

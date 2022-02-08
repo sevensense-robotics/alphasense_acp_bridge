@@ -5,7 +5,8 @@
 
 struct Config {
   uint16_t receive_port;
-  std::string pose_prefix;
+  std::string positioning_update_topic;
+  std::string ros_pose_topic;
   std::string subscribe_topic;
   std::string notification_topic;
   std::string operation_state_topic;
