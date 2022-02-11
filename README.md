@@ -61,6 +61,8 @@ sudo apt update && sudo apt install sevencpp-build ros-<distro>-state-machine-ms
 
 # Using the bridge
 
+**Starting with version v8.0.0 of the bridge** all functions are enabled by default and command line arguments have changed with respect to v7.0.1.
+
 The bridge can be started with through `rosrun` and its parameters are shown in the help message.
 
 ```sh
@@ -85,7 +87,7 @@ rosrun sev_acp_external_bridge ap-udp-bridge ...
 
 ## Sending odometry data to an Alphasense Position
 
-To send odometry data to the Alphasense Position, start the bridge with the `--odometry-topic` and specify the topic where `geometry_msgs/TwistStamped` messages get published and use the `--alphasense-ip` argument to specify the IP of the Alphasense Position:
+To send odometry data to the Alphasense Position, the bridge subscribes to the topic `/robot/velocity`. This can be changed with the `--odometry-topic` command line argument. The message type on that topic must be `geometry_msgs/TwistStamped`. Specify the IP of the Alphasense Position with the `--alphasense-ip` argument.
 
 ```sh
 rosrun sev_acp_external_bridge ap-udp-bridge --alphasense-ip 192.168.76.100 --odometry-topic /robot/velocity
@@ -95,29 +97,56 @@ Alphasense Position listens on port `7777` and by default the bridge sends to po
 
 ## Receiving pose information from Alphasense Position
 
-Use the web interface of the Alphasense Position to specify the IP address where it should send position information to. E.g. setting on the webinterface `192.168.76.1:7777` will send position information to that address. The command line argument `--pose-topic PREFIX` enables the listening capabilities of the bridge and publishes two ROS topics. Under `PREFIX/ros_pose` the positions are published as `geometry_msgs/PoseStamped` and under `PREFIX/positioning_update` as `atlas_msgs/PositioningUpdate`. The bridge listens by default on port `7777`, which can be changed with the `--pose-port` argument. For example
+Use the web interface of the Alphasense Position to specify the IP address where it should send position information to. E.g. setting on the webinterface `192.168.76.1:7777` will send position information to that address.
+The bridge publishes data from the Alphasense Position under the following topics, the command line arguments can be used to specify a different topic:
 
-```sh
-rosrun sev_acp_external_bridge ap-udp-bridge --pose-topic /alphasense --pose-port 7777
+```{list-table}
+* - **Message type**
+  - `PositioningUpdate`
+* - **Topic name**
+  - `/alphasense_position/T_G_O_propagated_update`
+* - **CLI argument**
+  - `--positioning-update-topic`
+```
+```{list-table}
+* - **Message type**
+  - `geometry_msgs/PoseStamped`
+* - **Topic name**
+  - `/alphasense_position/T_G_O_propagated`
+* - **CLI argument**
+  - `--ros-pose-topic`
+```
+```{list-table}
+* - **Message type**
+  - `state_machine_msgs/Status`
+* - **Topic name**
+  - `/alphasense_position/notifications`
+* - **CLI argument**
+  - `--notification-topic`
+```
+```{list-table}
+* - **Message type**
+  - `state_machine_msgs/State`
+* - **Topic name**
+  - `/alphasense_position/operation_state`
+* - **CLI argument**
+  - `--operation-state-topic`
 ```
 
-publishes the topics `/alphasense/ros_pose` and `/alphasense/positioning_update`.
+The bridge listens by default on port `7777`, which can be changed with the `--local-port` argument.
 
-## Bidirectional mode
+### Example launch commands
 
-The bridge can simultaneously receive position data from Alphasense Position and send odometry to it.
+Putting the above together, in the most basic setup only the Alphasense Position IP address needs to be provided to launch the bridge.
 
 ```sh
-rosrun sev_acp_external_bridge ap-udp-bridge --pose-topic /alphasense --pose-port 7777 --alphasense-ip 192.168.76.100 --odometry-topic /robot/velocity
+rosrun sev_acp_external_bridge ap-udp-bridge --alphasense-ip 192.168.76.100
 ```
 
-## Running multiple bridge instances
-
-The bridge runs by default as a ROS node with the name `ap_udp_bridge`. This name can be changed with the command line argument `__name:=DIFFERENT_NAME` (see the [ROS documentation](https://wiki.ros.org/Nodes#Remapping_Arguments.Special_keys) for this special parameter). This allows running more than once instance of the bridge on one roscore.
+A more complex command, overriding all default settings can be
 
 ```sh
-rosrun sev_acp_external_bridge ap-udp-bridge --alphasense-ip 192.168.76.100 --odometry-topic /robot/velocity __name:=odometry_bridge &
-rosrun sev_acp_external_bridge ap-udp-bridge --pose-topic /alphasense --pose-port 7777 __name:=pose_bridge
+rosrun sev_acp_external_bridge ap-udp-bridge --alphasense-ip 192.168.76.100 --alphasense-port 88 --local-port 7778 --odometry-topic /odometry --positioning-update-topic /alphasense/positioning --ros-pose-topic /ros/pose --notification-topic /notifications --operation-state-topic /AP/operations
 ```
 
 # License
