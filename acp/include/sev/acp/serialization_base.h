@@ -1,17 +1,20 @@
-#ifndef SEV_ACP_SERIALIZATION_H_
-#define SEV_ACP_SERIALIZATION_H_
+#ifndef SEV_ACP_SERIALIZATION_BASE_H_
+#define SEV_ACP_SERIALIZATION_BASE_H_
 
 #include <cstddef>
-#include <cstdint>
 #include <cstring>
 #include <map>
 #include <stdexcept>
 #include <string>
-#include <string_view>
-#include <type_traits>
-#include <variant>
+#include "./types.h"
 
-namespace sev::acp {
+#if __cplusplus < 201103L
+#error "Header serialization_base.h requires at least C++11"
+#endif
+
+namespace sev {
+namespace acp {
+
 enum class MessageType : int32_t {
   kPose = 0,
   kOperationState = 1,
@@ -28,7 +31,16 @@ enum class MessageType : int32_t {
   // kUninitialized = 99
 };
 
-inline const std::string& message_type_lookup(acp::MessageType mt) {
+template <typename T>
+constexpr std::size_t message_size() {
+  return sizeof(MessageType) + sizeof(T);
+}
+
+static_assert(
+    message_size<WheelOdometryInt>() == 40,
+    "WheelOdometryInt size unexpected.");
+
+inline const std::string& message_type_name_lookup(acp::MessageType mt) {
   static const std::map<MessageType, std::string> message_type_lookup{
       {MessageType::kPose, "Pose"},
       {MessageType::kOperationState, "OperationState"},
@@ -48,28 +60,55 @@ inline const std::string& message_type_lookup(acp::MessageType mt) {
   }
 }
 
-struct __attribute__((__packed__)) MessageHeader {
-  uint32_t seq;       // over all messages sent ?!
-  int64_t timestamp;  // epoch nanoseconds
-  int read(unsigned char const* src) {
-    const auto retval = sizeof(decltype(*this));
-    std::memcpy(reinterpret_cast<char*>(this), src, retval);
-    return retval;
-  }
-  friend bool operator==(const MessageHeader& lhs, const MessageHeader& rhs) {
-    return lhs.seq == rhs.seq && lhs.timestamp == rhs.timestamp;
-  }
-  friend bool operator!=(const MessageHeader& lhs, const MessageHeader& rhs) {
-    return !(lhs == rhs);
-  }
+template <typename T>
+struct MessageTypeIdLookup;
+
+template <>
+struct MessageTypeIdLookup<Pose> {
+  constexpr static MessageType message_type = MessageType::kPose;
+};
+template <>
+struct MessageTypeIdLookup<OperationState> {
+  constexpr static MessageType message_type = MessageType::kOperationState;
+};
+template <>
+struct MessageTypeIdLookup<Notifications> {
+  constexpr static MessageType message_type = MessageType::kNotification;
+};
+template <>
+struct MessageTypeIdLookup<WheelOdometryIntegrated> {
+  constexpr static MessageType message_type =
+      MessageType::kWheelOdometryIntegrated;
+};
+template <>
+struct MessageTypeIdLookup<WheelOdometryPose> {
+  constexpr static MessageType message_type = MessageType::kWheelOdometryPose;
+};
+template <>
+struct MessageTypeIdLookup<WheelOdometryWheelTicks> {
+  constexpr static MessageType message_type =
+      MessageType::kWheelOdometryWheelTicks;
+};
+template <>
+struct MessageTypeIdLookup<WheelOdometryWheelVel> {
+  constexpr static MessageType message_type =
+      MessageType::kWheelOdometryWheelVel;
+};
+template <>
+struct MessageTypeIdLookup<PoseInt> {
+  constexpr static MessageType message_type = MessageType::kPoseInt;
+};
+template <>
+struct MessageTypeIdLookup<PoseFloat> {
+  constexpr static MessageType message_type = MessageType::kPoseFloat;
+};
+template <>
+struct MessageTypeIdLookup<WheelOdometryInt> {
+  constexpr static MessageType message_type = MessageType::kWheelOdometryInt;
 };
 
-template <typename... U>
-struct serializable_trait {
-  constexpr static bool value = std::conjunction_v<serializable_trait<U>...>;
-};
 template <typename T>
-struct serializable_trait<T> {
+struct serializable_trait {
   constexpr static bool value = false;
 };
 
@@ -122,26 +161,19 @@ struct serializable_trait<struct WheelOdometryInt> {
   constexpr static bool value = true;
 };
 
-template <typename... T>
-constexpr bool serializable_v = serializable_trait<T...>::value;
-
-template <typename T, typename = typename std::enable_if_t<serializable_v<T>>>
-constexpr std::size_t message_size() {
-  return sizeof(MessageType) + sizeof(T);
-}
-
 template <
     typename T, typename Callable,
-    typename = typename std::enable_if_t<serializable_v<std::decay_t<T>>>
+    typename = typename std::enable_if<
+        serializable_trait<typename std::decay<T>::type>::value>::type
     // ,
     // typename = typename std::enable_if_t<std::is_invocable_r<
-    //     int, #<{(|decay?|)}># std::decay_t<Callable>, #<{(|char?void?|)}>#
-    //     const T*,
+    //     int, #<{(|decay?|)}># std::decay_t<Callable>,
+    //     #<{(|char?void?|)}># const T*,
     //     #<{(|size_t?|)}># int>::value>
     >
 int write_lambda(const T* obj, Callable&& c) {
   std::size_t written = 0;
-  MessageType t = T::message_type();
+  MessageType t = MessageTypeIdLookup<T>::message_type;
   while (written < sizeof(MessageType)) {
     written +=
         c(reinterpret_cast<const char*>(&t) + written, sizeof(MessageType));
@@ -161,7 +193,11 @@ int write_lambda(const T* obj, Callable&& c) {
   return written;
 }
 
-template <typename T, typename = typename std::enable_if_t<serializable_v<T>>>
+// TODO(pseyfert): Re-add write to std::array as free standing function as
+// overload, such that caller don't need to use .data() + .size().
+template <
+    typename T,
+    typename = typename std::enable_if<serializable_trait<T>::value>::type>
 int write_fun(
     const T* obj, unsigned char* dest,
     std::size_t max_buffer = message_size<T>()) {
@@ -190,7 +226,7 @@ int write_fun(
 
 template <
     typename T, typename Callable,
-    typename = typename std::enable_if_t<serializable_v<T>>>
+    typename = typename std::enable_if<serializable_trait<T>::value>::type>
 int read_lambda(T* dest, Callable&& c) {
   std::size_t read = 0;
   MessageType read_type;
@@ -198,7 +234,7 @@ int read_lambda(T* dest, Callable&& c) {
     read += c(
         reinterpret_cast<char*>(&read_type) + read, sizeof(MessageType) - read);
   }
-  if (read_type != T::message_type()) {
+  if (read_type != MessageTypeIdLookup<T>::message_type) {
     throw std::runtime_error(
         "Message contains a different type than the one that's being "
         "deserialized to.");
@@ -211,89 +247,9 @@ int read_lambda(T* dest, Callable&& c) {
   return read;
 }
 
-namespace detail {
-template <typename DesiredType, typename... AllTypes>
-bool read_one_type(
-    MessageType read_type, const unsigned char* data, std::size_t size,
-    std::variant<AllTypes...>* target) {
-  if (read_type != DesiredType::message_type()) {
-    return false;
-  }
-  if (size < message_size<DesiredType>()) {
-    throw std::length_error(
-        std::string("The byte-read limit (") + std::to_string(size) +
-        std::string(") indicates a message size that's too small for the "
-                    "message type that's being deserialized (") +
-        std::to_string(message_size<DesiredType>()) + std::string(")."));
-  }
-  if (target == nullptr) {
-    throw std::invalid_argument("Can't deserialize into a NULL object.");
-  }
-  *target = DesiredType{};
-  read_fun(&std::get<DesiredType>(*target), data, size);
-  return true;
-}
-
-// TODO(pseyfert): There must be a nicer way to end the recursion.
-template <typename T>
-constexpr bool validate_message_types_distinctive() {
-  return true;
-}
-template <typename T1, typename T2, typename... Ts>
-constexpr bool validate_message_types_distinctive() {
-  return (T1::message_type() != T2::message_type()) &&
-         ((T1::message_type() != Ts::message_type()) && ...) &&
-         validate_message_types_distinctive<T2, Ts...>();
-}
-}  // namespace detail
-
 template <
-    typename... T, typename = typename std::enable_if_t<serializable_v<T...>>>
-std::variant<MessageType, T...> read_variant_with_fallback(
-    const unsigned char* src, std::size_t size) {
-  static_assert(detail::validate_message_types_distinctive<T...>());
-  std::variant<MessageType, T...> retval;
-  MessageType read_type;
-  if (size < sizeof(MessageType)) {
-    throw std::length_error(
-        std::string("The byte-read limit is too low (") + std::to_string(size) +
-        std::string(") to read the message type."));
-  }
-  std::memcpy(reinterpret_cast<char*>(&read_type), src, sizeof(MessageType));
-  bool success =
-      (detail::read_one_type<T>(read_type, src, size, &retval) || ...);
-  if (!success) {
-    return read_type;
-  }
-  return retval;
-}
-
-template <
-    typename... T, typename = typename std::enable_if_t<serializable_v<T...>>>
-std::variant<T...> read_variant(const unsigned char* src, std::size_t size) {
-  static_assert(detail::validate_message_types_distinctive<T...>());
-  auto deser = read_variant_with_fallback<T...>(src, size);
-  if (std::holds_alternative<acp::MessageType>(deser)) {
-    auto message_type = std::get<acp::MessageType>(deser);
-    auto what = std::string("Encountered a message of type ") +
-                message_type_lookup(message_type) + ", which is not expected.";
-    throw std::runtime_error(what);
-  }
-  // This is casting variant<ruled_out, T...> -> variant<T...>.
-  // The MessageType variant has been ruled out at this point.
-  return std::visit(
-      [](auto const& input) -> std::variant<T...> {
-        using U = std::decay_t<decltype(input)>;
-        if constexpr (std::is_same_v<U, MessageType>) {
-          throw std::logic_error("Reached unreachable code.");
-        } else {
-          return input;
-        }
-      },
-      deser);
-}
-
-template <typename T, typename = typename std::enable_if_t<serializable_v<T>>>
+    typename T,
+    typename = typename std::enable_if<serializable_trait<T>::value>::type>
 int read_fun(T* obj, const unsigned char* src, std::size_t max_read_size) {
   std::size_t already_done = 0;
   return read_lambda(
@@ -311,5 +267,8 @@ int read_fun(T* obj, const unsigned char* src, std::size_t max_read_size) {
         return read_size;
       });
 }
-}  // namespace sev::acp
-#endif  // SEV_ACP_SERIALIZATION_H_
+
+}  // namespace acp
+}  // namespace sev
+
+#endif  // SEV_ACP_SERIALIZATION_BASE_H_

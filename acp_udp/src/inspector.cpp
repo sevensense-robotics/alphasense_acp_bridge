@@ -6,7 +6,7 @@
 #include <type_traits>
 #include <variant>
 
-#include "sev/acp/serialization.h"
+#include "sev/acp/serialization_modern.h"
 #include "sev/acp/types.h"
 #include "sev/acp_udp/port.h"
 #include "sev/acp_udp/receiver.h"
@@ -41,7 +41,10 @@ int main() {
             } else {
               printf(
                   "Received a %s\n",
-                  sev::acp::message_type_lookup(arg.message_type()).c_str());
+                  sev::acp::message_type_name_lookup(
+                      sev::acp::MessageTypeIdLookup<
+                          std::decay_t<decltype(arg)>>::message_type)
+                      .c_str());
               if constexpr (std::is_same_v<T, sev::acp::Pose>) {
                 printf(
                     "Message seq %x, time %lx\n", arg.header.seq,

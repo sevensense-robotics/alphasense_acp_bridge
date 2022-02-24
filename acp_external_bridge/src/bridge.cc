@@ -142,8 +142,9 @@ class UdpReceiverWrapper {
                   std::cout
                       << "ERROR: Encountered conversion error:\n"
                       << e.what() << "\nduring reception of message type "
-                      << sev::acp::message_type_lookup(
-                             acp_object.message_type())
+                      << sev::acp::message_type_name_lookup(
+                             sev::acp::MessageTypeIdLookup<std::decay_t<
+                                 decltype(acp_object)>>::message_type)
                       << "\twith seq: " << acp_object.header.seq
                       << "\tand timestamp: " << acp_object.header.timestamp;
                 }

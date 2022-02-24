@@ -15,7 +15,7 @@
 #include <type_traits>
 #include <unistd.h>
 
-#include "sev/acp/serialization.h"
+#include "sev/acp/serialization_base.h"
 #include "sev/acp_udp/port.h"
 
 namespace sev::acp::udp {
@@ -68,7 +68,9 @@ struct UdpSender {
   void send_message(Message&& m) const {
     constexpr int message_size = acp::message_size<std::decay_t<Message>>();
     std::array<unsigned char, message_size> a;
-    m.write(static_cast<unsigned char*>(a.data()));
+    write_fun<typename std::decay<Message>::type>(
+        static_cast<typename std::decay<Message>::type const*>(&m), a.data(),
+        a.size());
 
     auto sent_bytes = send_buffer(a);
     if (sent_bytes != message_size) {

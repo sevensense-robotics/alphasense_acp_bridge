@@ -2,17 +2,26 @@
 #define SEV_ACP_TYPES_H_
 
 #include <algorithm>
-#include <array>
 #include <cmath>
 #include <cstddef>
-#include <cstdint>
+#include <stdint.h>
 #include <utility>
 
-#include "sev/acp/serialization.h"
+namespace sev {
+namespace acp {
 
-namespace sev::acp {
+typedef uint8_t flag_t;
 
-using flag_t = uint8_t;
+struct __attribute__((__packed__)) MessageHeader {
+  uint32_t seq;       // over all messages sent ?!
+  int64_t timestamp;  // epoch nanoseconds
+  friend bool operator==(const MessageHeader& lhs, const MessageHeader& rhs) {
+    return lhs.seq == rhs.seq && lhs.timestamp == rhs.timestamp;
+  }
+  friend bool operator!=(const MessageHeader& lhs, const MessageHeader& rhs) {
+    return !(lhs == rhs);
+  }
+};
 
 inline bool equal_or_both_nan(double lhs, double rhs) {
   return lhs == rhs || (std::isnan(lhs) && std::isnan(rhs));
@@ -33,43 +42,18 @@ struct __attribute__((__packed__)) Rot3 {
   }
 };
 
-template <typename DERIVED, MessageType MESSAGE_TYPE>
+
+template <typename DERIVED>
 struct __attribute__((__packed__)) AbstractBase {
-  constexpr static MessageType message_type() {
-    return MESSAGE_TYPE;
-  }
-  template <std::size_t SIZE>
-  int write(std::array<char, SIZE>& dest) const {
-    return write(reinterpret_cast<unsigned char*>(dest.data()), SIZE);
-  }
-  template <std::size_t SIZE>
-  int write(std::array<unsigned char, SIZE>& dest) const {
-    return write(dest.data(), SIZE);
-  }
-  int write(
-      unsigned char* dest,
-      std::size_t max_buffer = message_size<DERIVED>()) const {
-    return write_fun<DERIVED>(
-        static_cast<DERIVED const*>(this), dest, max_buffer);
-  }
-  template <typename CALLABLE>
-  int write_callable(CALLABLE&& callable) const {
-    return write_lambda<DERIVED, CALLABLE>(
-        static_cast<DERIVED const*>(this), std::forward<CALLABLE>(callable));
-  }
-  int read(unsigned char const* src, std::size_t size) {
-    return read_fun<DERIVED>(static_cast<DERIVED*>(this), src, size);
-  }
   friend bool operator==(const DERIVED& lhs, const DERIVED& rhs) {
-    auto lhs_begin = reinterpret_cast<const char*>(&lhs);
-    auto lhs_end = lhs_begin + sizeof(DERIVED);
-    auto rhs_begin = reinterpret_cast<const char*>(&rhs);
+    const char* lhs_begin = reinterpret_cast<const char*>(&lhs);
+    const char* lhs_end = lhs_begin + sizeof(DERIVED);
+    const char* rhs_begin = reinterpret_cast<const char*>(&rhs);
     return std::equal(lhs_begin, lhs_end, rhs_begin);
   }
 };
 
-struct __attribute__((__packed__)) Pose
-    : public AbstractBase<Pose, acp::MessageType::kPose> {
+struct __attribute__((__packed__)) Pose : public AbstractBase<Pose> {
   MessageHeader header;
   double yaw;
   Rot3 R_m_r;
@@ -78,7 +62,7 @@ struct __attribute__((__packed__)) Pose
 };
 
 struct __attribute__((__packed__)) OperationState
-    : public AbstractBase<OperationState, acp::MessageType::kOperationState> {
+    : public AbstractBase<OperationState> {
   MessageHeader header;
   int32_t task;                   //  Enum Task
   int32_t stage;                  // Enum SubTask
@@ -88,7 +72,7 @@ struct __attribute__((__packed__)) OperationState
 };
 
 struct __attribute__((__packed__)) Notifications
-    : public AbstractBase<Notifications, acp::MessageType::kNotification> {
+    : public AbstractBase<Notifications> {
   MessageHeader header;
   int32_t module_id;
   int32_t status_code;
@@ -96,47 +80,35 @@ struct __attribute__((__packed__)) Notifications
   int32_t logId;     //  -1 if not available  or UUID?
   int32_t logEntryId;
 };
-// Ensure the empty base class doesn't add size.
-static_assert(
-    sizeof(Notifications) == 5 * sizeof(int32_t) + sizeof(MessageHeader));
-// Ensure there are no padding bits at the end of the MessageHeader.
-static_assert(
-    sizeof(Notifications) ==
-    5 * sizeof(int32_t) + sizeof(int64_t) + sizeof(uint32_t));
 
 struct __attribute__((__packed__)) WheelOdometryIntegrated
-    : public AbstractBase<
-          WheelOdometryIntegrated, acp::MessageType::kWheelOdometryIntegrated> {
+    : public AbstractBase<WheelOdometryIntegrated> {
   MessageHeader header;
   double twist[6];  // x,y,z, R,P,Y
 };
 
 struct __attribute__((__packed__)) WheelOdometryPose
-    : public AbstractBase<
-          WheelOdometryPose, acp::MessageType::kWheelOdometryPose> {
+    : public AbstractBase<WheelOdometryPose> {
   MessageHeader header;
   Rot3 rot;
   double position[3];
 };
 
 struct __attribute__((__packed__)) WheelOdometryWheelTicks
-    : public AbstractBase<
-          WheelOdometryWheelTicks, acp::MessageType::kWheelOdometryWheelTicks> {
+    : public AbstractBase<WheelOdometryWheelTicks> {
   MessageHeader header;
   int32_t left_wheel_ticks;
   int32_t right_wheel_ticks;
 };
 
 struct __attribute__((__packed__)) WheelOdometryWheelVel
-    : public AbstractBase<
-          WheelOdometryWheelVel, acp::MessageType::kWheelOdometryWheelVel> {
+    : public AbstractBase<WheelOdometryWheelVel> {
   MessageHeader header;
   double left_wheel_vel;
   double right_wheel_vel;
 };
 
-struct __attribute__((__packed__)) PoseInt
-    : public AbstractBase<PoseInt, acp::MessageType::kPoseInt> {
+struct __attribute__((__packed__)) PoseInt : public AbstractBase<PoseInt> {
   MessageHeader header;
   int32_t position_mm[3];
   int32_t velocity_mmps[3];
@@ -147,8 +119,7 @@ struct __attribute__((__packed__)) PoseInt
   flag_t relocalization;
 };
 
-struct __attribute__((__packed__)) PoseFloat
-    : public AbstractBase<PoseFloat, acp::MessageType::kPoseFloat> {
+struct __attribute__((__packed__)) PoseFloat : public AbstractBase<PoseFloat> {
   MessageHeader header;
   double position[3];
   double velocity[3];
@@ -161,16 +132,12 @@ struct __attribute__((__packed__)) PoseFloat
 };
 
 struct __attribute__((__packed__)) WheelOdometryInt
-    : public AbstractBase<
-          WheelOdometryInt, acp::MessageType::kWheelOdometryInt> {
+    : public AbstractBase<WheelOdometryInt> {
   MessageHeader header;
   int32_t twist[6];  // x,y,z, R,P,Y
 };
 
-static_assert(
-    message_size<WheelOdometryInt>() == 40,
-    "WheelOdometryInt size unexpected.");
-
-}  // namespace sev::acp
+}  // namespace acp
+}  // namespace sev
 
 #endif  // SEV_ACP_TYPES_H_
