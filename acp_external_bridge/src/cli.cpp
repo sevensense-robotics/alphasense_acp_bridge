@@ -2,6 +2,7 @@
 #include <boost/program_options.hpp>
 #include <iostream>
 #include <sev/acp_udp/port.h>
+#include "sev/acp_ros_conversions/conversions.h"
 
 namespace po = boost::program_options;
 
@@ -43,7 +44,6 @@ std::optional<Config> parse_args(int ac, char** av) {  // NOLINT
     (
       "pose-topic",
       po::value<std::string>(&config.publish_topic)
-          ->default_value("")
           ->value_name("PREFIX"),
       "(deprecated) ROS topic prefix on which poses will be published."
     )
@@ -96,8 +96,12 @@ std::optional<Config> parse_args(int ac, char** av) {  // NOLINT
     config.receive_port = config.legacy_receive_port;
   }
   if (vm.count("pose-topic")) {
-    config.ros_pose_topic = config.publish_topic + "/" sev::acp::udp_ros_bridge::suffix_lookup<geometry_msgs::PoseStamped>();
-    config.positioning_update_topic = config.publish_topic + "/" sev::acp::udp_ros_bridge::suffix_lookup<atlas_msgs::PositioningUpdate>();
+    config.ros_pose_topic =
+        config.publish_topic + "/" +
+        sev::acp::udp_ros_bridge::suffix_lookup<geometry_msgs::PoseStamped>();
+    config.positioning_update_topic = config.publish_topic + "/" +
+                                      sev::acp::udp_ros_bridge::suffix_lookup<
+                                          atlas_msgs::PositioningUpdate>();
   }
   return config;
 }
