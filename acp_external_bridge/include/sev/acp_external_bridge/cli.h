@@ -4,7 +4,9 @@
 #include <string>
 
 struct Config {
+  uint16_t legacy_receive_port;
   uint16_t receive_port;
+  std::string publish_topic;
   std::string positioning_update_topic;
   std::string ros_pose_topic;
   std::string subscribe_topic;

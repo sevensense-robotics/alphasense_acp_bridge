@@ -15,6 +15,12 @@ std::optional<Config> parse_args(int ac, char** av) {  // NOLINT
      "Show help message."
     )
     (
+      "pose-port",
+      po::value<uint16_t>(&config.legacy_receive_port)
+          ->value_name("PORT"),
+      "(deprecated) Port on which the bridge listens (not only for pose messages)."
+    )
+    (
       "local-port",
       po::value<uint16_t>(&config.receive_port)
           ->default_value(sev::acp::udp::default_port)
@@ -33,6 +39,13 @@ std::optional<Config> parse_args(int ac, char** av) {  // NOLINT
       po::value<std::string>(&config.ae_address)
           ->value_name("IP"),
       "IP Address of Alphasense Embedded."
+    )
+    (
+      "pose-topic",
+      po::value<std::string>(&config.publish_topic)
+          ->default_value("")
+          ->value_name("PREFIX"),
+      "(deprecated) ROS topic prefix on which poses will be published."
     )
     (
       "ros-pose-topic",
@@ -78,6 +91,13 @@ std::optional<Config> parse_args(int ac, char** av) {  // NOLINT
   if (vm.count("help")) {
     std::cout << desc << '\n';
     return std::nullopt;
+  }
+  if (vm.count("pose-port")) {
+    config.receive_port = config.legacy_receive_port;
+  }
+  if (vm.count("pose-topic")) {
+    config.ros_pose_topic = config.publish_topic + "/" sev::acp::udp_ros_bridge::suffix_lookup<geometry_msgs::PoseStamped>();
+    config.positioning_update_topic = config.publish_topic + "/" sev::acp::udp_ros_bridge::suffix_lookup<atlas_msgs::PositioningUpdate>();
   }
   return config;
 }
