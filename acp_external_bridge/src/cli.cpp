@@ -100,7 +100,7 @@ std::optional<Config> parse_args(int ac, char** av) {  // NOLINT
     config.receive_port = config.legacy_receive_port;
     std::cout << "Deprecation warning: --pose-port will be replaced by "
                  "--local-port in a future release.\nUntil then, --pose-port"
-                 "takes precedence over --local-port.";
+                 "takes precedence over --local-port.\n";
   }
   if (vm.count("pose-topic")) {
     config.ros_pose_topic =
