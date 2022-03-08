@@ -98,6 +98,9 @@ std::optional<Config> parse_args(int ac, char** av) {  // NOLINT
   }
   if (vm.count("pose-port")) {
     config.receive_port = config.legacy_receive_port;
+    std::cout << "Deprecation warning: --pose-port will be replaced by "
+                 "--local-port in a future release.\nUntil then, --pose-port"
+                 "takes precedence over --local-port.";
   }
   if (vm.count("pose-topic")) {
     config.ros_pose_topic =
@@ -106,7 +109,9 @@ std::optional<Config> parse_args(int ac, char** av) {  // NOLINT
     config.positioning_update_topic = config.publish_topic + "/" +
                                       sev::acp::udp_ros_bridge::suffix_lookup<
                                           atlas_msgs::PositioningUpdate>();
-    std::cout << "Using --pose-topic overrides the settings of "
+    std::cout << "Deprecation warning: The --pose-topic argument will be "
+                 "removed in a future release.\nUntil then, "
+                 "using --pose-topic overrides the settings of "
                  "--ros-pose-topic and --positioning-update-topic.\n";
   }
   return config;
