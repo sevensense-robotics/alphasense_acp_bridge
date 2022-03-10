@@ -27,8 +27,7 @@ std::optional<Config> parse_args(int ac, char** av) {  // NOLINT
       po::value<uint16_t>(&config.receive_port)
           ->default_value(sev::acp::udp::default_port)
           ->value_name("PORT"),
-      "Port on which the bridge listens (e.g. for pose messages). Same "
-      "as --pose-port."
+      "Port on which the bridge listens (e.g. for pose messages)."
     )
     (
       "alphasense-port",
@@ -48,8 +47,10 @@ std::optional<Config> parse_args(int ac, char** av) {  // NOLINT
       po::value<std::string>(&config.publish_topic)
           ->value_name("PREFIX"),
       "ROS topic prefix on which poses will be published. "
-      "DEPRECATED: Using --ros-pose-topic and --positioning-update-topic "
-      "is preferred."
+      "DEPRECATED: Configure --ros-pose-topic and --positioning-update-topic "
+      "separately instead. E.g. --ros-pose-topic PREFIX/ros_pose "
+      "--positioning-update-topic PREFIX/positioning_update will have the "
+      "same effect."
     )
     (
       "ros-pose-topic",
@@ -109,9 +110,11 @@ std::optional<Config> parse_args(int ac, char** av) {  // NOLINT
     config.positioning_update_topic = config.publish_topic + "/" +
                                       sev::acp::udp_ros_bridge::suffix_lookup<
                                           atlas_msgs::PositioningUpdate>();
-    std::cout << "Deprecation warning: The --pose-topic argument will be "
-                 "removed in a future release.\nUntil then, "
-                 "using --pose-topic overrides the settings of "
+    std::cout << "Deprecation warning: Use '--positioning-update-topic "
+              << config.positioning_update_topic << " --ros-pose-topic "
+              << config.ros_pose_topic
+              << "' instead of --pose-topic."
+                 "\nUsing --pose-topic overrides the settings of "
                  "--ros-pose-topic and --positioning-update-topic.\n";
   }
   return config;
