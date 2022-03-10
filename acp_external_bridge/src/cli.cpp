@@ -20,7 +20,7 @@ std::optional<Config> parse_args(int ac, char** av) {  // NOLINT
       po::value<uint16_t>(&config.legacy_receive_port)
           ->value_name("PORT"),
       "Port on which the bridge listens (not only for pose messages). "
-      "DEPRECATED: Future versions will use --local-port."
+      "DEPRECATED: Use --local-port instead."
     )
     (
       "local-port",
