@@ -30,6 +30,13 @@ class TimeTranslator {
   uint64_t last_timestamp_{0};
 
  public:
+  // TODO(pseyfert): These would require changes to the cuckoo
+  // DeviceTimeTranslator, which are out of scope.
+  TimeTranslator(const TimeTranslator&) = delete;
+  TimeTranslator& operator=(const TimeTranslator&) = delete;
+  TimeTranslator(TimeTranslator&&) = delete;
+  TimeTranslator& operator=(TimeTranslator&&) = delete;
+
   explicit TimeTranslator(ros::NodeHandle* n)
       : time_translator_{
             cuckoo_time_translator::ClockParameters(1.e9), n->getNamespace(),
