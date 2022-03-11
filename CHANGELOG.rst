@@ -2,6 +2,10 @@
 Changelog for alphasense_acp_bridge
 ===================================
 
+9.1.0 (2022-03-11)
+------------------
+* CLI updates in main. (!7)
+
 9.0.1 (2022-03-10)
 ------------------
 * Fix order of angles in documentation. (!1)
