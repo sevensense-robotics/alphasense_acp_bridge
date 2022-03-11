@@ -2,6 +2,10 @@
 Changelog for alphasense_acp_bridge
 ===================================
 
+9.2.0 (2022-03-11)
+------------------
+* Fixup product naming. (!8)
+
 9.1.0 (2022-03-11)
 ------------------
 * CLI updates in main. (!7)
