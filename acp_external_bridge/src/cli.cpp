@@ -2,6 +2,7 @@
 #include <boost/program_options.hpp>
 #include <iostream>
 #include <sev/acp_udp/port.h>
+#include "sev/acp_ros_conversions/conversions.h"
 
 namespace po = boost::program_options;
 
@@ -13,6 +14,13 @@ std::optional<Config> parse_args(int ac, char** av) {  // NOLINT
     (
      "help",
      "Show help message."
+    )
+    (
+      "pose-port",
+      po::value<uint16_t>(&config.legacy_receive_port)
+          ->value_name("PORT"),
+      "Port on which the bridge listens (not only for pose messages). "
+      "DEPRECATED: Use --local-port instead."
     )
     (
       "local-port",
@@ -33,6 +41,16 @@ std::optional<Config> parse_args(int ac, char** av) {  // NOLINT
       po::value<std::string>(&config.ae_address)
           ->value_name("IP"),
       "IP Address of Alphasense Embedded."
+    )
+    (
+      "pose-topic",
+      po::value<std::string>(&config.publish_topic)
+          ->value_name("PREFIX"),
+      "ROS topic prefix on which poses will be published. "
+      "DEPRECATED: Configure --ros-pose-topic and --positioning-update-topic "
+      "separately instead. E.g. --ros-pose-topic PREFIX/ros_pose "
+      "--positioning-update-topic PREFIX/positioning_update will have the "
+      "same effect."
     )
     (
       "ros-pose-topic",
@@ -78,6 +96,26 @@ std::optional<Config> parse_args(int ac, char** av) {  // NOLINT
   if (vm.count("help")) {
     std::cout << desc << '\n';
     return std::nullopt;
+  }
+  if (vm.count("pose-port")) {
+    config.receive_port = config.legacy_receive_port;
+    std::cout << "Deprecation warning: --pose-port will be replaced by "
+                 "--local-port in a future release.\nUntil then, --pose-port"
+                 "takes precedence over --local-port.\n";
+  }
+  if (vm.count("pose-topic")) {
+    config.ros_pose_topic =
+        config.publish_topic + "/" +
+        sev::acp::udp_ros_bridge::suffix_lookup<geometry_msgs::PoseStamped>();
+    config.positioning_update_topic = config.publish_topic + "/" +
+                                      sev::acp::udp_ros_bridge::suffix_lookup<
+                                          atlas_msgs::PositioningUpdate>();
+    std::cout << "Deprecation warning: Use '--positioning-update-topic "
+              << config.positioning_update_topic << " --ros-pose-topic "
+              << config.ros_pose_topic
+              << "' instead of --pose-topic."
+                 "\nUsing --pose-topic overrides the settings of "
+                 "--ros-pose-topic and --positioning-update-topic.\n";
   }
   return config;
 }
