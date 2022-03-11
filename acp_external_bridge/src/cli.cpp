@@ -8,7 +8,7 @@ namespace po = boost::program_options;
 
 std::optional<Config> parse_args(int ac, char** av) {  // NOLINT
   Config config;
-  po::options_description desc("Alphasense Embedded UDP bridge");
+  po::options_description desc("Alphasense Position UDP bridge");
   desc.add_options()
       // clang-format off
     (
@@ -34,13 +34,13 @@ std::optional<Config> parse_args(int ac, char** av) {  // NOLINT
       po::value<uint16_t>(&config.ae_port)
           ->default_value(sev::acp::udp::default_port)
           ->value_name("PORT"),
-      "Port on which the Alphasense Embedded is listening for Odometry data."
+      "Port on which the Alphasense hardware is listening for Odometry data."
     )
     (
       "alphasense-ip",
       po::value<std::string>(&config.ae_address)
           ->value_name("IP"),
-      "IP Address of Alphasense Embedded."
+      "IP Address of Alphasense hardware."
     )
     (
       "pose-topic",
