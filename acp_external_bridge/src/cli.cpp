@@ -6,6 +6,8 @@
 
 namespace po = boost::program_options;
 
+#define DEFAULT_PREFIX "alphasense_position"
+
 std::optional<Config> parse_args(int ac, char** av) {  // NOLINT
   Config config;
   po::options_description desc("Alphasense Position UDP bridge");
@@ -62,28 +64,28 @@ std::optional<Config> parse_args(int ac, char** av) {  // NOLINT
     (
       "ros-pose-topic",
       po::value<std::string>(&config.ros_pose_topic)
-          ->default_value("/alphasense_position/T_G_O_propagated")
+          ->default_value("/" DEFAULT_PREFIX "/T_G_O_propagated")
           ->value_name("TOPIC"),
       "ROS topic on which geometry_msgs poses will be published."
     )
     (
       "positioning-update-topic",
       po::value<std::string>(&config.positioning_update_topic)
-          ->default_value("/alphasense_position/T_G_O_propagated_update")
+          ->default_value("/" DEFAULT_PREFIX "/T_G_O_propagated_update")
           ->value_name("TOPIC"),
       "ROS topic on which positioning updates will be published."
     )
     (
       "notification-topic",
       po::value<std::string>(&config.notification_topic)
-          ->default_value("/alphasense_position/notifications")
+          ->default_value("/" DEFAULT_PREFIX "/notifications")
           ->value_name("TOPIC"),
       "ROS topic on which notifications will be published."
     )
     (
       "operation-state-topic",
       po::value<std::string>(&config.operation_state_topic)
-          ->default_value("/alphasense_position/operation_state")
+          ->default_value("/" DEFAULT_PREFIX "/operation_state")
           ->value_name("TOPIC"),
       "ROS topic on which operation states will be published."
     )
@@ -124,5 +126,6 @@ std::optional<Config> parse_args(int ac, char** av) {  // NOLINT
                  "\nUsing --pose-topic overrides the settings of "
                  "--ros-pose-topic and --positioning-update-topic.\n";
   }
+  config.default_topic_prefix = DEFAULT_PREFIX;
   return config;
 }
