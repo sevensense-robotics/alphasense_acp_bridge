@@ -31,7 +31,18 @@ void sighand(int) {
 namespace sev::acp::udp_ros_bridge {
 namespace detail {
 template <typename... RosType>
-void update_timestamps(
+void setFrameIds(std::tuple<RosType...>* ros_tuple, std::string_view frame_id) {
+  std::apply(
+      [frame_id](auto&... ros_tuple_element) {
+        auto update_frame_id = [frame_id](auto& x) {
+          x.header.frame_id = frame_id;
+        };
+        (..., update_frame_id(ros_tuple_element));
+      },
+      *ros_tuple);
+}
+template <typename... RosType>
+void updateTimestamps(
     std::tuple<RosType...>* ros_tuple, const ros::Time republish_time) {
   std::apply(
       [republish_time](auto&... ros_tuple_element) {
@@ -43,7 +54,7 @@ void update_timestamps(
       *ros_tuple);
 }
 template <typename... RosType>
-auto get_time(const std::tuple<RosType...>& ros_message) {
+auto getTime(const std::tuple<RosType...>& ros_message) {
   return std::get<0>(ros_message).header.stamp.toNSec();
 }
 
@@ -63,6 +74,8 @@ class UdpReceiverWrapper {
   sev::acp::udp::UdpReceiver receiver_;
   sev::acp::udp_ros_bridge::TimeTranslator time_translator_;
 
+  std::string frame_id_;
+
  public:
   UdpReceiverWrapper(ros::NodeHandle* n, const Config& config)
       : notification_pub_{detail::instantiate_publisher<
@@ -76,7 +89,8 @@ class UdpReceiverWrapper {
             detail::instantiate_publisher<atlas_msgs::PositioningUpdate>(
                 n, config.positioning_update_topic)},
         receiver_{config.receive_port},
-        time_translator_{n} {}
+        time_translator_{n},
+        frame_id_{config.frame_id} {}
 
   void spin(std::atomic_bool* keep_listening) {
     while (ros::ok()) {
@@ -95,13 +109,13 @@ class UdpReceiverWrapper {
                 try {
                   auto ros_message_tuple = convertToRosStamped(acp_object);
                   const MessageTimes message_times{
-                      detail::get_time(ros_message_tuple), received_time};
+                      detail::getTime(ros_message_tuple), received_time};
 
                   const auto republish_time =
                       this->time_translator_.translate<AcpType>(message_times);
 
                   if (republish_time) {
-                    detail::update_timestamps(
+                    detail::updateTimestamps(
                         &ros_message_tuple, *republish_time);
                     if constexpr (std::is_same_v<
                                       AcpType, sev::acp::Notifications>) {
@@ -115,6 +129,9 @@ class UdpReceiverWrapper {
                           std::get<state_machine_msgs::State>(
                               ros_message_tuple));
                     } else {
+                      // TODO(pseyfert): Refactor, the frame id seems wrong
+                      //                 here.
+                      detail::setFrameIds(&ros_message_tuple, frame_id_);
                       std::apply(
                           [&ros_pub = this->ros_pub_,
                            &positioning_update_pub =

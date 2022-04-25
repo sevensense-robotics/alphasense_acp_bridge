@@ -37,6 +37,13 @@ std::optional<Config> parse_args(int ac, char** av) {  // NOLINT
       "Port on which the Alphasense hardware is listening for Odometry data."
     )
     (
+      "ros-frame-id",
+      po::value<std::string>(&config.frame_id)
+          ->default_value("")
+          ->value_name("FRAME_ID"),
+      "Frame ID with which poses get published."
+    )
+    (
       "alphasense-ip",
       po::value<std::string>(&config.ae_address)
           ->value_name("IP"),
