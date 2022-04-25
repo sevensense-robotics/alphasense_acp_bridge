@@ -14,6 +14,7 @@ struct Config {
   std::string operation_state_topic;
   std::string ae_address;
   uint16_t ae_port;
+  std::string frame_id;
 };
 
 std::optional<Config> parse_args(int ac, char** av);  // NOLINT

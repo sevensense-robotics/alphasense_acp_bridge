@@ -135,6 +135,8 @@ The bridge publishes data from the Alphasense Position under the following topic
 
 The bridge listens by default on port `7777`, which can be changed with the `--local-port` argument.
 
+The `frame_id` field of the ROS message headers are empty by default. Users can provide a value for position information (`PositioningUpdate` and `PoseStamped`) with the `--ros-frame-id` argument.
+
 ### Example launch commands
 
 Putting the above together, in the most basic setup only the Alphasense Position IP address needs to be provided to launch the bridge.
@@ -146,7 +148,7 @@ rosrun sev_acp_external_bridge ap-udp-bridge --alphasense-ip 192.168.76.100
 A more complex command, overriding all default settings can be
 
 ```sh
-rosrun sev_acp_external_bridge ap-udp-bridge --alphasense-ip 192.168.76.100 --alphasense-port 88 --local-port 7778 --odometry-topic /odometry --positioning-update-topic /alphasense/positioning --ros-pose-topic /ros/pose --notification-topic /notifications --operation-state-topic /AP/operations
+rosrun sev_acp_external_bridge ap-udp-bridge --alphasense-ip 192.168.76.100 --alphasense-port 88 --local-port 7778 --odometry-topic /odometry --positioning-update-topic /alphasense/positioning --ros-pose-topic /ros/pose --notification-topic /notifications --operation-state-topic /AP/operations --ros-frame-id "alphasense_position_frame"
 ```
 
 # License
