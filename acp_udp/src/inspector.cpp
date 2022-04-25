@@ -16,7 +16,7 @@ std::atomic_bool keep_going = true;
 template <class>
 inline constexpr bool always_false_v = false;
 
-void sighand(int sig) {
+void sighand(int /*sig*/) {
   keep_going = false;
 }
 

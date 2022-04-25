@@ -237,10 +237,13 @@ convertToAcp(const geometry_msgs::TwistStamped& ros_message) {
 
   const auto woi_int = [&]() {
     sev::acp::WheelOdometryInt woi;
-    const auto buffer =
-        std::array<int, 6>{linear.x * M_TO_MM,      linear.y * M_TO_MM,
-                           linear.z * M_TO_MM,      angular.x * RAD_TO_CDEG,
-                           angular.y * RAD_TO_CDEG, angular.z * RAD_TO_CDEG};
+    const auto buffer = std::array<int, 6>{
+        static_cast<int>(linear.x * M_TO_MM),
+        static_cast<int>(linear.y * M_TO_MM),
+        static_cast<int>(linear.z * M_TO_MM),
+        static_cast<int>(angular.x * RAD_TO_CDEG),
+        static_cast<int>(angular.y * RAD_TO_CDEG),
+        static_cast<int>(angular.z * RAD_TO_CDEG)};
     // Can't use std::copy because woi.twist is packed and STL algorithms don't
     // handle packed structs.
     for (std::size_t i = 0; i < buffer.size(); ++i) {
