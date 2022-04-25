@@ -2,6 +2,10 @@
 Changelog for alphasense_acp_bridge
 ===================================
 
+9.3.0 (2022-04-25)
+------------------
+* Allow users to set frame_id. (!10)
+
 9.2.1 (2022-04-25)
 ------------------
 * Fix minor warnings. (!11)
