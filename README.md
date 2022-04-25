@@ -100,38 +100,12 @@ Alphasense Position listens on port `7777` and by default the bridge sends to po
 Use the web interface of the Alphasense Position to specify the IP address where it should send position information to. E.g. setting on the webinterface `192.168.76.1:7777` will send position information to that address.
 The bridge publishes data from the Alphasense Position under the following topics, the command line arguments can be used to specify a different topic:
 
-```{list-table}
-* - **Message type**
-  - `PositioningUpdate`
-* - **Topic name**
-  - `/alphasense_position/T_G_O_propagated_update`
-* - **CLI argument**
-  - `--positioning-update-topic`
-```
-```{list-table}
-* - **Message type**
-  - `geometry_msgs/PoseStamped`
-* - **Topic name**
-  - `/alphasense_position/T_G_O_propagated`
-* - **CLI argument**
-  - `--ros-pose-topic`
-```
-```{list-table}
-* - **Message type**
-  - `state_machine_msgs/Status`
-* - **Topic name**
-  - `/alphasense_position/notifications`
-* - **CLI argument**
-  - `--notification-topic`
-```
-```{list-table}
-* - **Message type**
-  - `state_machine_msgs/State`
-* - **Topic name**
-  - `/alphasense_position/operation_state`
-* - **CLI argument**
-  - `--operation-state-topic`
-```
+| Message type                  | Default topic                                    | CLI argument                     |
+| ----------------------------- | ------------------------------------------------ | -------------------------------- |
+| `PositioningUpdate`           | `/alphasense_position/T_G_O_propagated_update`   | `--positioning-update-topic`     |
+| `geometry_msgs/PoseStamped`   | `/alphasense_position/T_G_O_propagated`          | `--ros-pose-topic`               |
+| `state_machine_msgs/Status`   | `/alphasense_position/notifications`             | `--notification-topic`           |
+| `state_machine_msgs/State`    | `/alphasense_position/operation_state`           | `--operation-state-topic`        |
 
 The bridge listens by default on port `7777`, which can be changed with the `--local-port` argument.
 
