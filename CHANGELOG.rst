@@ -2,6 +2,10 @@
 Changelog for alphasense_acp_bridge
 ===================================
 
+9.4.0 (2022-04-28)
+------------------
+* Encapsulate cuckoo into namespace. (!9)
+
 9.3.1 (2022-04-27)
 ------------------
 * Correct table formatting in README. (!12)
