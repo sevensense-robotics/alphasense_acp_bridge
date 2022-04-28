@@ -3,6 +3,7 @@
 #include <csignal>
 #include <functional>
 #include <iterator>
+#include <memory>
 #include <optional>
 #include <thread>
 #include <type_traits>
@@ -72,6 +73,7 @@ class UdpReceiverWrapper {
   ros::Publisher positioning_update_pub_;
 
   sev::acp::udp::UdpReceiver receiver_;
+  ros::NodeHandle namespace_handle_;
   sev::acp::udp_ros_bridge::TimeTranslator time_translator_;
 
   std::string frame_id_;
@@ -89,7 +91,8 @@ class UdpReceiverWrapper {
             detail::instantiate_publisher<atlas_msgs::PositioningUpdate>(
                 n, config.positioning_update_topic)},
         receiver_{config.receive_port},
-        time_translator_{n},
+        namespace_handle_{*n, config.default_topic_prefix},
+        time_translator_{&namespace_handle_},
         frame_id_{config.frame_id} {}
 
   void spin(std::atomic_bool* keep_listening) {

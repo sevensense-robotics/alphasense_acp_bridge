@@ -15,6 +15,7 @@ struct Config {
   std::string ae_address;
   uint16_t ae_port;
   std::string frame_id;
+  std::string default_topic_prefix;
 };
 
 std::optional<Config> parse_args(int ac, char** av);  // NOLINT
