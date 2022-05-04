@@ -95,11 +95,16 @@ inline int64_t toNs(const TimePoint timestamp) {
 }
 
 inline ros::Time toRosTime(const TimePoint& time_point) {
-  const int64_t timestamp_ns = toNs(time_point);
-  const int32_t ros_timestamp_sec = timestamp_ns * kNanosecondsToSeconds;
-  const int32_t ros_timestamp_nsec =
-      timestamp_ns % static_cast<int64_t>(kSecondsToNanoSeconds);
-  return ros::Time(ros_timestamp_sec, ros_timestamp_nsec);
+  const std::chrono::time_point<std::chrono::system_clock, std::chrono::seconds>
+      timestamp_rounded_to_seconds =
+          std::chrono::floor<std::chrono::seconds>(time_point);
+
+  const Duration timestamp_only_ns_part =
+      time_point - timestamp_rounded_to_seconds;
+
+  return ros::Time(
+      timestamp_rounded_to_seconds.time_since_epoch().count(),
+      timestamp_only_ns_part.count());
 }
 
 inline ros::Time convertNanosecondsInt64ToRosTime(
