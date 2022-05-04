@@ -2,6 +2,10 @@
 Changelog for alphasense_acp_bridge
 ===================================
 
+9.4.1 (2022-05-04)
+------------------
+* Port fixup from https://gitlab.com/sevensense/general/sevensense_common/-/merge_requests/330. (!14)
+
 9.4.0 (2022-04-28)
 ------------------
 * Encapsulate cuckoo into namespace. (!9)

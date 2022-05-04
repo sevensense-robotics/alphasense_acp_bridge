@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package format="2">
   <name>sev_acp</name>
-  <version>9.4.0</version>
+  <version>9.4.1</version>
   <description>Sevensense ACP message definitions and serialization.</description>
   <maintainer email="developer@sevensense.ch">Sevensense developers</maintainer>
   <license>closed</license>
