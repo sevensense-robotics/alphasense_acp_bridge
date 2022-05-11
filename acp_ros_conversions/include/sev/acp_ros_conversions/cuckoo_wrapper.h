@@ -91,7 +91,7 @@ class TimeTranslator {
       } catch (const std::runtime_error& e) {
         std::cout << "WARNING: Resetting Cuckoo because Cuckoo failed to "
                      "translate timestamps:\n"
-                  << e.what();
+                  << e.what() << std::endl;
         time_translator_.resetTranslation();
         return message_times.received;
       }
@@ -102,7 +102,8 @@ class TimeTranslator {
                          MessageTypeIdLookup<AcpType>::message_type)
                   << " but its timestamp is not newer "
                      "than a previous message of the same "
-                     "type. Dropping message.";
+                     "type. Dropping message."
+                  << std::endl;
         return std::nullopt;
       } else {
         return time_translator_.translate(message_times.transmitted);
