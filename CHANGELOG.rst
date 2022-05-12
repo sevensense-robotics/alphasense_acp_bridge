@@ -2,6 +2,10 @@
 Changelog for alphasense_acp_bridge
 ===================================
 
+9.4.2 (2022-05-12)
+------------------
+* Ensure warnings get sent to journal. (!18)
+
 9.4.1 (2022-05-04)
 ------------------
 * Port fixup from https://gitlab.com/sevensense/general/sevensense_common/-/merge_requests/330. (!14)
