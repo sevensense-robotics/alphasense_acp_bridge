@@ -2,6 +2,10 @@
 Changelog for alphasense_acp_bridge
 ===================================
 
+10.2.0 (2022-06-08)
+-------------------
+* Retagging v9.4.2. Effectively reverting v10.0.0.
+
 9.4.2 (2022-05-12)
 ------------------
 * Ensure warnings get sent to journal. (!18)
