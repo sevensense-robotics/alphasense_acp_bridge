@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package format="2">
   <name>sev_acp_external_bridge</name>
-  <version>9.4.2</version>
+  <version>10.2.1</version>
   <description>Message forwarding and translation between sev_acp over UDP and ros, with reduced dependencies and configuration.</description>
   <maintainer email="developer@sevensense.ch">Sevensense developers</maintainer>
   <license>closed</license>
